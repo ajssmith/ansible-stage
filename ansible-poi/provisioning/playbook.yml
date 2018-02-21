@@ -1,0 +1,37 @@
+---
+- hosts: rhm-x3550-12.rhm.lab.eng.bos.redhat.com
+  become: true
+  tasks:
+    - name: Make sure we can connect
+      ping:
+    - name: Install emacs, git
+      yum: name={{item}}
+      with_items:
+        - emacs
+        - git
+    - name: Install devel dependencies
+      yum: name={{item}}
+      with_items:
+        - libxml2-devel
+        - libxslt-devel
+        - ruby-devel
+        - rubygems
+        - wget
+    - name: install the "Development tools' package group
+      yum:
+        name: "@Development tools"
+        state: present
+    - name: upgrade all packages
+      yum: 
+        name: '*'
+        state: latest
+    - name: Add stack user
+      user:
+        name: stack
+        password: stack
+    - name: Allow stack to have passwordless sudo
+      lineinfile:
+        path: /etc/sudoers
+        state: present
+        regexp: '^stack\s'
+        line: '%stack ALL=(ALL) NOPASSWD: ALL'

@@ -1,0 +1,66 @@
+---
+- hosts: rhm-per530-01.rhm.lab.eng.bos.redhat.com
+  become: true
+  tasks:
+    - name: Make sure we can connect
+      ping:
+    - name: Install emacs, git
+      yum: name={{item}}
+      with_items:
+        - emacs
+        - git
+    - name: Install devel dependencies
+      yum: name={{item}}
+      with_items:
+        - libxml2-devel
+        - libxslt-devel
+        - wget
+    - name: Install devel dependencies
+      yum: name={{item}}
+      with_items:
+        - python-devel
+        - libffi-devel
+        - gcc
+    - name: download pip
+      get_url:
+        url: https://bootstrap.pypa.io/get-pip.py
+        dest: /tmp/get-pip.py
+    - name: Install pip
+      command: "python get-pip.py"
+      args:
+        chdir: /tmp
+    - name: Install pip items
+      pip:
+        name: "{{item}}"
+        state: forcereinstall
+      with_items:
+        - pip
+        - tox
+        - ansible
+    - name: upgrade all packages
+      yum: 
+        name: '*'
+        state: latest
+    - name: Make sure we have a 'wheel' group
+      group:
+        name: wheel
+        state: present
+    - name: Allow 'wheel' group to have passwordless sudo
+      lineinfile:
+        dest: /etc/sudoers
+        state: present
+        regexp: '^%wheel'
+        line: '%wheel ALL=(ALL) NOPASSWD: ALL'
+        validate: visudo -cf %s
+    - name: Add osdeploy user to wheel group
+      user:
+        name: osdeploy
+        password: osdeploy
+        groups: wheel
+        append: yes
+        state: present
+        createhome: yes
+    - name: Set up auth keys for the osdeploy user
+      authorized_key:
+        user: osdeploy
+        key: /home/asmith/.ssh/id_rsa.pub

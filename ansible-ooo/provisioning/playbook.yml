@@ -1,0 +1,65 @@
+---
+- hosts: rhm-per530-01.rhm.lab.eng.bos.redhat.com
+  become: true
+  vars:
+    createuser: 'osdeploy'
+    createpassword: 'password'
+  tasks:
+    - name: Make sure we can connect
+      ping:
+    - name: Unmount home
+      command: "umount /dev/mapper/centos_rhm--per530--01-home"
+    - name: Set xfs ftype
+      command: "mkfs.xfs -f -n ftype=1 /dev/mapper/centos_rhm--per530--01-home"
+    - name: Remount home
+      command: "mount /dev/mapper/centos_rhm--per530--01-home /home"
+    - name: Eck tip
+      command: "printf '250\t32000\t32\t1024' > /proc/sys/kernel/sem"
+    - name: Install emacs, git
+      yum: name={{item}}
+      with_items:
+        - emacs
+        - git
+    - name: Install devel dependencies
+      yum: name={{item}}
+      with_items:
+        - libxml2-devel
+        - libxslt-devel
+        - wget
+    - name: Install devel dependencies
+      yum: name={{item}}
+      with_items:
+        - python-devel
+        - libffi-devel
+        - gcc
+    - name: download pip
+      get_url:
+        url: https://bootstrap.pypa.io/get-pip.py
+        dest: /tmp/get-pip.py
+    - name: Install pip
+      command: "python get-pip.py"
+      args:
+        chdir: /tmp
+    - name: Install pip items
+      pip:
+        name: "{{item}}"
+        state: forcereinstall
+      with_items:
+        - pip
+        - tox
+        - ansible
+    - name: upgrade all packages
+      yum: 
+        name: '*'
+        state: latest
+    - name: copy user playbook
+      copy:
+        src: ./playbook_user.yml
+        dest: /root/playbook_user.yml
+        mode: 0755
+    - name: copy host.ini
+      copy:
+        src: ./host.ini
+        dest: /root/host.ini
+        mode: 0755
+

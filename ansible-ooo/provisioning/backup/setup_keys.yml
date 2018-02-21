@@ -1,0 +1,33 @@
+---
+- hosts: rhm-per530-01.rhm.lab.eng.bos.redhat.com
+  become: true
+  vars:
+    createuser: 'osdeploy1'
+    createpassword: 'password'
+  tasks:
+    - name: Make sure we can connect
+      ping:
+   - name: Setup | authorized key upload
+      authorized_key:
+        user: root
+        key: "{{ lookup('file', item) }}"
+        state: present
+        path: '/root/.ssh/authorized_keys'
+        manage_dir: yes
+      with_fileglob:
+        - public_keys/*.pub
+#
+#    - name: Setup | authorized key upload
+#      authorized_key:
+#        user: root
+#        key: "{{ lookup('file', item) }}"
+#        state: present
+#        manage_dir: yes
+#      with_file:
+#        - '/home/{{ createuser }}/.ssh/id_rsa.pub'
+#    - name: Set authorized key for createuser
+#      authorized_key:
+#        user: '{{ createuser }}'
+#        state: present
+#        key: "{{ lookup('file', '/home/{{ createuser }}/.ssh/id_rsa.pub') }}"
+

@@ -1,0 +1,49 @@
+---
+- hosts: 38.145.35.101
+  become: true
+  tasks:
+    - name: Make sure we can connect
+      ping:
+    - name: Install emacs, git
+      yum: name={{item}}
+      with_items:
+        - emacs
+        - git
+    - name: Install devel dependencies
+      yum: name={{item}}
+      with_items:
+        - epel-release
+        - python-devel
+        - libffi-devel
+        - gcc
+        - openssl-devel
+    - name: download pip
+      get_url:
+        url: https://bootstrap.pypa.io/get-pip.py
+        dest: /tmp/get-pip.py
+    - name: Install pip
+      command: "python get-pip.py"
+      args:
+        chdir: /tmp
+    - name: Install pip items
+      pip:
+        name: "{{item}}"
+        state: forcereinstall
+      with_items:
+        - pip
+        - tox
+        - ansible
+    - name: upgrade all packages
+      yum: 
+        name: '*'
+        state: latest
+    - name: Add stack user
+      user:
+        name: stack
+        password: stack
+    - name: Allow stack to have passwordless sudo
+      lineinfile:
+        path: /etc/sudoers
+        state: present
+        regexp: '^stack\s'
+        line: '%stack ALL=(ALL) NOPASSWD: ALL'

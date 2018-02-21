@@ -1,0 +1,29 @@
+---
+- hosts: rhm-x3550-12.rhm.lab.eng.bos.redhat.com
+  become: true
+  tasks:
+    - name: Make sure we can connect
+      ping:
+    - name: Install emacs, git
+      yum: name={{item}}
+      with_items:
+        - emacs
+        - git
+    - name: Install devel dependencies
+      yum: name={{item}}
+      with_items:
+        - qpid-proton-c-devel
+        - python-qpid-proton
+        - python-devel
+        - cyrus-sasl-plain
+        - cyrus-sasl-devel
+        - asciidoc
+    - name: install the "Development tools' package group
+      yum:
+        name: "@Development tools"
+        state: present
+    - name: upgrade all packages
+      yum: 
+        name: '*'
+        state: latest
+
